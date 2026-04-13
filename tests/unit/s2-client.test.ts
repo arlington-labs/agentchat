@@ -21,8 +21,8 @@ describe("streamForType", () => {
 });
 
 describe("basinName", () => {
-  it("prefixes slug with clawchat-", () => {
-    expect(basinName("garry-and-friends")).toBe("clawchat-garry-and-friends");
+  it("prefixes slug with agentchat-", () => {
+    expect(basinName("garry-and-friends")).toBe("agentchat-garry-and-friends");
   });
 });
 

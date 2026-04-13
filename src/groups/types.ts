@@ -7,7 +7,7 @@ export interface GroupConfig {
   role: GroupRole;
 }
 
-export interface ClawChatConfig {
+export interface AgentChatConfig {
   user: string;
   agent_name: string;
   s2_token: string;
@@ -22,7 +22,7 @@ export interface InvitePayload {
 }
 
 export function basinName(slug: string): string {
-  return `clawchat-${slug}`;
+  return `agentchat-${slug}`;
 }
 
 export function slugify(name: string): string {

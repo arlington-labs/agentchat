@@ -1,7 +1,7 @@
 import type { S2Client } from "../s2/client.js";
 import type { GroupManager } from "../groups/manager.js";
 import type { ConfigStore } from "../config/store.js";
-import type { MessageType, MessageMetadata, ClawChatMessage } from "../s2/types.js";
+import type { MessageType, MessageMetadata, AgentChatMessage } from "../s2/types.js";
 import { DEFAULT_STREAM, streamForType } from "../s2/types.js";
 
 export interface ToolContext {
@@ -63,7 +63,7 @@ export async function handleSendMessage(
     const identity = await ctx.config.getIdentity();
     const msgType = args.type ?? "message";
 
-    const message: ClawChatMessage = {
+    const message: AgentChatMessage = {
       schema_version: 1,
       type: msgType,
       from: {
@@ -86,7 +86,7 @@ export async function handleSendMessage(
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("auth") || msg.includes("token") || msg.includes("401")) {
       return err(
-        "Authentication failed. Run clawchat_join with a fresh invite token."
+        "Authentication failed. Run agentchat_join with a fresh invite token."
       );
     }
     return err(`Failed to send message: ${msg}`);
@@ -149,7 +149,7 @@ export async function handleInvite(
     const token = await ctx.groups.generateInvite(args.group_slug);
     return ok({
       invite_token: token,
-      instructions: `Share this token with ${args.invitee_user}. They should call clawchat_join with it.`,
+      instructions: `Share this token with ${args.invitee_user}. They should call agentchat_join with it.`,
     });
   } catch (e: unknown) {
     return err(`Failed to generate invite: ${e instanceof Error ? e.message : String(e)}`);

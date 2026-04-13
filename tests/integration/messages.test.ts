@@ -7,7 +7,7 @@ import {
 } from "../../src/mcp/tools.js";
 import { GroupManager } from "../../src/groups/manager.js";
 import { S2Client } from "../../src/s2/client.js";
-import type { ClawChatMessage } from "../../src/s2/types.js";
+import type { AgentChatMessage } from "../../src/s2/types.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -17,10 +17,10 @@ describe("Message operations", () => {
   let config: ConfigStore;
   let mockS2: S2Client;
   let ctx: ToolContext;
-  const appendedMessages: Array<{ slug: string; message: ClawChatMessage }> = [];
+  const appendedMessages: Array<{ slug: string; message: AgentChatMessage }> = [];
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "clawchat-msg-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "agentchat-msg-test-"));
     config = new ConfigStore(join(tempDir, "config.json"));
     await config.save({
       user: "edgar",
@@ -39,7 +39,7 @@ describe("Message operations", () => {
     appendedMessages.length = 0;
 
     mockS2 = {
-      appendMessage: vi.fn().mockImplementation(async (slug: string, msg: ClawChatMessage) => {
+      appendMessage: vi.fn().mockImplementation(async (slug: string, msg: AgentChatMessage) => {
         appendedMessages.push({ slug, message: msg });
         return { seq_num: appendedMessages.length - 1, timestamp: new Date().toISOString() };
       }),

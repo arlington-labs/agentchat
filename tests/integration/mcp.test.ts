@@ -18,7 +18,7 @@ vi.mock("../../src/s2/client.js", () => {
   return {
     S2Client: vi.fn().mockImplementation(() => ({
       createBasin: vi.fn().mockResolvedValue({
-        name: "clawchat-test",
+        name: "agentchat-test",
         state: "active",
       }),
       deleteBasin: vi.fn().mockResolvedValue(undefined),
@@ -42,7 +42,7 @@ describe("MCP Tool Handlers", () => {
   let ctx: ToolContext;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "clawchat-mcp-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "agentchat-mcp-test-"));
     config = new ConfigStore(join(tempDir, "config.json"));
     await config.save({
       user: "edgar",
@@ -60,14 +60,14 @@ describe("MCP Tool Handlers", () => {
     vi.clearAllMocks();
   });
 
-  describe("clawchat_create_group", () => {
+  describe("agentchat_create_group", () => {
     it("creates a group and returns slug, basin, streams", async () => {
       const result = await handleCreateGroup(ctx, { name: "Friends" });
 
       expect(result.isError).toBeUndefined();
       const data = JSON.parse(result.content[0].text);
       expect(data.slug).toBe("friends");
-      expect(data.basin).toBe("clawchat-friends");
+      expect(data.basin).toBe("agentchat-friends");
       expect(data.streams).toContain("general");
     });
 
@@ -82,7 +82,7 @@ describe("MCP Tool Handlers", () => {
     });
   });
 
-  describe("clawchat_list_groups", () => {
+  describe("agentchat_list_groups", () => {
     it("lists all configured groups", async () => {
       await handleCreateGroup(ctx, { name: "Group A", slug: "group-a" });
       await handleCreateGroup(ctx, { name: "Group B", slug: "group-b" });
@@ -101,7 +101,7 @@ describe("MCP Tool Handlers", () => {
     });
   });
 
-  describe("clawchat_invite + clawchat_join", () => {
+  describe("agentchat_invite + agentchat_join", () => {
     it("full invite/join flow through MCP tools", async () => {
       // Create group
       await handleCreateGroup(ctx, { name: "Alpha Team", slug: "alpha-team" });
@@ -116,7 +116,7 @@ describe("MCP Tool Handlers", () => {
       expect(inviteData.invite_token).toBeTruthy();
 
       // Set up joiner context
-      const joinerDir = await mkdtemp(join(tmpdir(), "clawchat-joiner-mcp-"));
+      const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-mcp-"));
       const joinerConfig = new ConfigStore(join(joinerDir, "config.json"));
       await joinerConfig.save({
         user: "floyd",
@@ -139,7 +139,7 @@ describe("MCP Tool Handlers", () => {
       expect(joinResult.isError).toBeUndefined();
       const joinData = JSON.parse(joinResult.content[0].text);
       expect(joinData.group_slug).toBe("alpha-team");
-      expect(joinData.basin).toBe("clawchat-alpha-team");
+      expect(joinData.basin).toBe("agentchat-alpha-team");
 
       // Verify joiner has the group
       const joinerGroupsList = await handleListGroups(joinerCtx);

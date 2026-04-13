@@ -11,7 +11,7 @@ vi.mock("../../src/s2/client.js", () => {
   return {
     S2Client: vi.fn().mockImplementation(() => ({
       createBasin: vi.fn().mockResolvedValue({
-        name: "clawchat-test-group",
+        name: "agentchat-test-group",
         state: "active",
       }),
       deleteBasin: vi.fn().mockResolvedValue(undefined),
@@ -28,7 +28,7 @@ describe("GroupManager", () => {
   let manager: GroupManager;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "clawchat-groups-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "agentchat-groups-test-"));
     config = new ConfigStore(join(tempDir, "config.json"));
     await config.save({
       user: "edgar",
@@ -50,7 +50,7 @@ describe("GroupManager", () => {
       const result = await manager.createGroup("Test Group", "test-group");
 
       expect(result.slug).toBe("test-group");
-      expect(result.basin).toBe("clawchat-test-group");
+      expect(result.basin).toBe("agentchat-test-group");
       expect(result.streams).toContain("general");
       expect(s2.createBasin).toHaveBeenCalledWith("test-group");
       expect(s2.createStream).toHaveBeenCalledWith("test-group", "general");
@@ -60,7 +60,7 @@ describe("GroupManager", () => {
       const result = await manager.createGroup("Garry and Friends");
 
       expect(result.slug).toBe("garry-and-friends");
-      expect(result.basin).toBe("clawchat-garry-and-friends");
+      expect(result.basin).toBe("agentchat-garry-and-friends");
     });
 
     it("saves group to config as owner", async () => {
@@ -102,7 +102,7 @@ describe("GroupManager", () => {
       expect(decoded.streams).toContain("general");
 
       // Join as a new user (using a separate config)
-      const joinerDir = await mkdtemp(join(tmpdir(), "clawchat-joiner-"));
+      const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-"));
       const joinerConfig = new ConfigStore(join(joinerDir, "config.json"));
       await joinerConfig.save({
         user: "floyd",
@@ -118,7 +118,7 @@ describe("GroupManager", () => {
       const joinResult = await joinerManager.joinGroup(token);
 
       expect(joinResult.group_slug).toBe("friends");
-      expect(joinResult.basin).toBe("clawchat-friends");
+      expect(joinResult.basin).toBe("agentchat-friends");
       expect(joinResult.streams).toContain("general");
 
       // Verify joiner config was updated

@@ -1,12 +1,12 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { ClawChatConfig, GroupConfig } from "../groups/types.js";
+import type { AgentChatConfig, GroupConfig } from "../groups/types.js";
 
-const CONFIG_DIR = join(homedir(), ".clawchat");
+const CONFIG_DIR = join(homedir(), ".agentchat");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
-const DEFAULT_CONFIG: ClawChatConfig = {
+const DEFAULT_CONFIG: AgentChatConfig = {
   user: "",
   agent_name: "",
   s2_token: "",
@@ -24,16 +24,16 @@ export class ConfigStore {
       : CONFIG_DIR;
   }
 
-  async load(): Promise<ClawChatConfig> {
+  async load(): Promise<AgentChatConfig> {
     try {
       const data = await readFile(this.configPath, "utf-8");
-      return JSON.parse(data) as ClawChatConfig;
+      return JSON.parse(data) as AgentChatConfig;
     } catch {
       return { ...DEFAULT_CONFIG };
     }
   }
 
-  async save(config: ClawChatConfig): Promise<void> {
+  async save(config: AgentChatConfig): Promise<void> {
     await mkdir(this.configDir, { recursive: true });
     await writeFile(this.configPath, JSON.stringify(config, null, 2), "utf-8");
   }

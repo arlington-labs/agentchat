@@ -28,7 +28,7 @@ async function createAgent(
     role: "owner" | "member";
   }> = []
 ): Promise<Agent> {
-  const tempDir = await mkdtemp(join(tmpdir(), `clawchat-mcp-int-${user}-`));
+  const tempDir = await mkdtemp(join(tmpdir(), `agentchat-mcp-int-${user}-`));
   const configPath = join(tempDir, "config.json");
   await writeFile(
     configPath,
@@ -90,7 +90,7 @@ async function readWithRetry(
   const empty = { messages: [] as Array<Record<string, unknown>>, next_seq_num: 0 };
 
   for (let i = 0; i < retries; i++) {
-    const result = await callTool(agent, "clawchat_read_messages", {
+    const result = await callTool(agent, "agentchat_read_messages", {
       group_slug: groupSlug,
       ...(stream && { stream }),
     });
@@ -107,7 +107,7 @@ async function readWithRetry(
     await new Promise((r) => setTimeout(r, 500 * (i + 1)));
   }
   // Final attempt
-  const result = await callTool(agent, "clawchat_read_messages", {
+  const result = await callTool(agent, "agentchat_read_messages", {
     group_slug: groupSlug,
     ...(stream && { stream }),
   });
@@ -134,7 +134,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
       try {
         await s2Cleanup.deleteBasin(slug);
       } catch {
-        console.warn(`Failed to clean up basin: clawchat-${slug}`);
+        console.warn(`Failed to clean up basin: agentchat-${slug}`);
       }
     }
   }, 60_000);
@@ -154,7 +154,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
     it("full DM flow: create → invite → join → send → read", async () => {
       // Agent A creates group
       agentA = await createAgent("alice", "alice-claw", S2_TOKEN!);
-      const createResult = await callTool(agentA, "clawchat_create_group", {
+      const createResult = await callTool(agentA, "agentchat_create_group", {
         name: "DM Test",
         slug,
       });
@@ -163,10 +163,10 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
         basin: string;
       };
       expect(createData.slug).toBe(slug);
-      expect(createData.basin).toBe(`clawchat-${slug}`);
+      expect(createData.basin).toBe(`agentchat-${slug}`);
 
       // Agent A generates invite
-      const inviteResult = await callTool(agentA, "clawchat_invite", {
+      const inviteResult = await callTool(agentA, "agentchat_invite", {
         group_slug: slug,
         invitee_user: "bob",
       });
@@ -177,14 +177,14 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
 
       // Agent B joins with invite token
       agentB = await createAgent("bob", "bob-claw", S2_TOKEN!);
-      const joinResult = await callTool(agentB, "clawchat_join", {
+      const joinResult = await callTool(agentB, "agentchat_join", {
         invite_token: inviteData.invite_token,
       });
       const joinData = parseResult(joinResult) as { group_slug: string };
       expect(joinData.group_slug).toBe(slug);
 
       // Agent A sends a message
-      const sendResult = await callTool(agentA, "clawchat_send_message", {
+      const sendResult = await callTool(agentA, "agentchat_send_message", {
         group_slug: slug,
         content: "hey B",
       });
@@ -221,20 +221,20 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
     it("three agents communicate in a shared group", async () => {
       // Agent A creates group
       agentA = await createAgent("alice", "alice-claw", S2_TOKEN!);
-      await callTool(agentA, "clawchat_create_group", {
+      await callTool(agentA, "agentchat_create_group", {
         name: "Trio Chat",
         slug,
       });
 
       // Agent A invites B
-      const invB = await callTool(agentA, "clawchat_invite", {
+      const invB = await callTool(agentA, "agentchat_invite", {
         group_slug: slug,
         invitee_user: "bob",
       });
       const invBData = parseResult(invB) as { invite_token: string };
 
       // Agent A invites C
-      const invC = await callTool(agentA, "clawchat_invite", {
+      const invC = await callTool(agentA, "agentchat_invite", {
         group_slug: slug,
         invitee_user: "charlie",
       });
@@ -242,25 +242,25 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
 
       // B and C join
       agentB = await createAgent("bob", "bob-claw", S2_TOKEN!);
-      await callTool(agentB, "clawchat_join", {
+      await callTool(agentB, "agentchat_join", {
         invite_token: invBData.invite_token,
       });
 
       agentC = await createAgent("charlie", "charlie-claw", S2_TOKEN!);
-      await callTool(agentC, "clawchat_join", {
+      await callTool(agentC, "agentchat_join", {
         invite_token: invCData.invite_token,
       });
 
       // All three send messages
-      await callTool(agentA, "clawchat_send_message", {
+      await callTool(agentA, "agentchat_send_message", {
         group_slug: slug,
         content: "hello from alice",
       });
-      await callTool(agentB, "clawchat_send_message", {
+      await callTool(agentB, "agentchat_send_message", {
         group_slug: slug,
         content: "hello from bob",
       });
-      await callTool(agentC, "clawchat_send_message", {
+      await callTool(agentC, "agentchat_send_message", {
         group_slug: slug,
         content: "hello from charlie",
       });
@@ -309,12 +309,12 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
 
     it("read before any messages returns empty or error gracefully", async () => {
       agent = await createAgent("alice", "alice-claw", S2_TOKEN!);
-      await callTool(agent, "clawchat_create_group", {
+      await callTool(agent, "agentchat_create_group", {
         name: "Edge Test",
         slug,
       });
 
-      const result = await callTool(agent, "clawchat_read_messages", {
+      const result = await callTool(agent, "agentchat_read_messages", {
         group_slug: slug,
       });
 
@@ -334,7 +334,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
     it("send to group not joined returns error", async () => {
       const outsider = await createAgent("outsider", "outsider-claw", S2_TOKEN!);
       try {
-        const result = await callTool(outsider, "clawchat_send_message", {
+        const result = await callTool(outsider, "agentchat_send_message", {
           group_slug: "nonexistent-group-xyz",
           content: "should fail",
         });
@@ -349,22 +349,22 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
       const agentB = await createAgent("bob", "bob-claw", S2_TOKEN!);
 
       // Generate invite and join
-      const invResult = await callTool(agent, "clawchat_invite", {
+      const invResult = await callTool(agent, "agentchat_invite", {
         group_slug: slug,
         invitee_user: "bob",
       });
       const invData = parseResult(invResult) as { invite_token: string };
-      await callTool(agentB, "clawchat_join", {
+      await callTool(agentB, "agentchat_join", {
         invite_token: invData.invite_token,
       });
 
       // Send concurrently
       await Promise.all([
-        callTool(agent, "clawchat_send_message", {
+        callTool(agent, "agentchat_send_message", {
           group_slug: slug,
           content: "concurrent-alice",
         }),
-        callTool(agentB, "clawchat_send_message", {
+        callTool(agentB, "agentchat_send_message", {
           group_slug: slug,
           content: "concurrent-bob",
         }),
@@ -393,13 +393,13 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
 
     it("bug_report routes to bug-reports stream, not general", async () => {
       agent = await createAgent("alice", "alice-claw", S2_TOKEN!);
-      await callTool(agent, "clawchat_create_group", {
+      await callTool(agent, "agentchat_create_group", {
         name: "Routing Test",
         slug,
       });
 
       // Send a bug report
-      await callTool(agent, "clawchat_send_message", {
+      await callTool(agent, "agentchat_send_message", {
         group_slug: slug,
         content: "null pointer in auth",
         type: "bug_report",
@@ -421,7 +421,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
       );
 
       // Should NOT appear in general stream
-      const genResult = await callTool(agent, "clawchat_read_messages", {
+      const genResult = await callTool(agent, "agentchat_read_messages", {
         group_slug: slug,
         stream: "general",
       });
@@ -440,7 +440,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
     }, 30_000);
 
     it("prompt_report routes to prompt-reports stream", async () => {
-      await callTool(agent, "clawchat_send_message", {
+      await callTool(agent, "agentchat_send_message", {
         group_slug: slug,
         content: "chain-of-thought works better",
         type: "prompt_report",
@@ -459,11 +459,11 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
     }, 30_000);
 
     it("regular message and dx_feedback both route to general", async () => {
-      await callTool(agent, "clawchat_send_message", {
+      await callTool(agent, "agentchat_send_message", {
         group_slug: slug,
         content: "hello world",
       });
-      await callTool(agent, "clawchat_send_message", {
+      await callTool(agent, "agentchat_send_message", {
         group_slug: slug,
         content: "SDK docs need work",
         type: "dx_feedback",

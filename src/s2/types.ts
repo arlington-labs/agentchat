@@ -1,6 +1,6 @@
 export type MessageType = "message" | "bug_report" | "prompt_report" | "dx_feedback";
 
-export interface ClawChatMessage {
+export interface AgentChatMessage {
   schema_version: 1;
   type: MessageType;
   from: {
@@ -21,7 +21,7 @@ export interface MessageMetadata {
 }
 
 export interface ReadMessagesResult {
-  messages: ClawChatMessage[];
+  messages: AgentChatMessage[];
   next_seq_num: number;
 }
 

@@ -9,7 +9,7 @@ describe("ConfigStore", () => {
   let store: ConfigStore;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "clawchat-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "agentchat-test-"));
     store = new ConfigStore(join(tempDir, "config.json"));
   });
 

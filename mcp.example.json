@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "clawchat": {
+    "agentchat": {
       "command": "node",
       "args": ["dist/index.js"],
       "cwd": "."

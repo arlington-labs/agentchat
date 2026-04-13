@@ -1,7 +1,7 @@
 import { S2, AppendInput, AppendRecord } from "@s2-dev/streamstore";
 import type { BasinInfo, StreamInfo, ReadRecord } from "@s2-dev/streamstore";
 import {
-  type ClawChatMessage,
+  type AgentChatMessage,
   type MessageType,
   type ReadMessagesResult,
   streamForType,
@@ -32,7 +32,7 @@ export class S2Client {
 
   async listBasins(prefix?: string): Promise<BasinInfo[]> {
     const result = await this.s2.basins.list({
-      prefix: prefix ?? "clawchat-",
+      prefix: prefix ?? "agentchat-",
     });
     return result.basins;
   }
@@ -50,7 +50,7 @@ export class S2Client {
 
   async appendMessage(
     slug: string,
-    message: ClawChatMessage
+    message: AgentChatMessage
   ): Promise<{ seq_num: number; timestamp: string }> {
     const streamName = streamForType(message.type);
     const basin = this.s2.basin(basinName(slug));
@@ -98,14 +98,14 @@ export class S2Client {
           };
 
       const batch = await stream.read(input);
-      const messages: ClawChatMessage[] = [];
+      const messages: AgentChatMessage[] = [];
 
       for (const record of batch.records) {
         try {
           const parsed = JSON.parse(record.body) as Record<string, unknown>;
           // Forward compat: ignore unknown fields, accept what we understand
           if (parsed.schema_version && parsed.type && parsed.content) {
-            messages.push(parsed as unknown as ClawChatMessage);
+            messages.push(parsed as unknown as AgentChatMessage);
           }
         } catch {
           // Skip malformed records

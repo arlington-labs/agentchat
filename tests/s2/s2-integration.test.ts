@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { S2Client } from "../../src/s2/client.js";
-import { streamForType, type ClawChatMessage, type MessageType } from "../../src/s2/types.js";
+import { streamForType, type AgentChatMessage, type MessageType } from "../../src/s2/types.js";
 
 const S2_TOKEN = process.env.S2_TOKEN;
 const TEST_SLUG = `int-test-${Date.now()}`;
@@ -26,12 +26,12 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
   describe("basin lifecycle", () => {
     it("creates a basin", async () => {
       const basin = await client.createBasin(TEST_SLUG);
-      expect(basin.name).toBe(`clawchat-${TEST_SLUG}`);
+      expect(basin.name).toBe(`agentchat-${TEST_SLUG}`);
     }, 15_000);
 
     it("lists basins and finds the test basin", async () => {
-      const basins = await client.listBasins(`clawchat-${TEST_SLUG}`);
-      const found = basins.some((b) => b.name === `clawchat-${TEST_SLUG}`);
+      const basins = await client.listBasins(`agentchat-${TEST_SLUG}`);
+      const found = basins.some((b) => b.name === `agentchat-${TEST_SLUG}`);
       expect(found).toBe(true);
     }, 15_000);
   });
@@ -56,7 +56,7 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
   // ── Message append + read round-trip ─────────────────────────────
 
   describe("message round-trip", () => {
-    const sentMessages: ClawChatMessage[] = [];
+    const sentMessages: AgentChatMessage[] = [];
 
     it("appends a chat message to general stream", async () => {
       const msg = makeMessage("message", "Hello from integration test");
@@ -240,7 +240,7 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
     it("create group → send message → read messages", async () => {
       // 1. Create basin (simulates group creation)
       const basin = await client.createBasin(lifecycleSlug);
-      expect(basin.name).toBe(`clawchat-${lifecycleSlug}`);
+      expect(basin.name).toBe(`agentchat-${lifecycleSlug}`);
 
       // 2. Create general stream
       await client.createStream(lifecycleSlug, "general");
@@ -265,8 +265,8 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
 function makeMessage(
   type: MessageType,
   content: string,
-  metadata?: ClawChatMessage["metadata"]
-): ClawChatMessage {
+  metadata?: AgentChatMessage["metadata"]
+): AgentChatMessage {
   return {
     schema_version: 1,
     type,

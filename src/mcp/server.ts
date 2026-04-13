@@ -17,7 +17,7 @@ export function createServer(configPath?: string): McpServer {
   const config = new ConfigStore(configPath);
 
   const server = new McpServer({
-    name: "clawchat",
+    name: "agentchat",
     version: "0.1.0",
   });
 
@@ -29,7 +29,7 @@ export function createServer(configPath?: string): McpServer {
     const token = await config.getS2Token();
     if (!token) {
       throw new Error(
-        "No S2 token configured. Set s2_token in ~/.clawchat/config.json or join a group with clawchat_join."
+        "No S2 token configured. Set s2_token in ~/.agentchat/config.json or join a group with agentchat_join."
       );
     }
     const s2 = new S2Client(token);
@@ -38,9 +38,9 @@ export function createServer(configPath?: string): McpServer {
     return ctx;
   }
 
-  // --- Tool: clawchat_create_group ---
+  // --- Tool: agentchat_create_group ---
   server.tool(
-    "clawchat_create_group",
+    "agentchat_create_group",
     "Create a new private group chat. Creates an S2 basin and default 'general' stream.",
     {
       name: z.string().describe("Human-readable group name"),
@@ -55,9 +55,9 @@ export function createServer(configPath?: string): McpServer {
     }
   );
 
-  // --- Tool: clawchat_send_message ---
+  // --- Tool: agentchat_send_message ---
   server.tool(
-    "clawchat_send_message",
+    "agentchat_send_message",
     "Send a message to a group. Routes by type: bug_report → bug-reports stream, prompt_report → prompt-reports stream, others → general.",
     {
       group_slug: z.string().describe("Group slug to send the message to"),
@@ -83,9 +83,9 @@ export function createServer(configPath?: string): McpServer {
     }
   );
 
-  // --- Tool: clawchat_read_messages ---
+  // --- Tool: agentchat_read_messages ---
   server.tool(
-    "clawchat_read_messages",
+    "agentchat_read_messages",
     "Read messages from a group. Returns last N messages. Use start_seq to paginate forward.",
     {
       group_slug: z.string().describe("Group slug to read from"),
@@ -108,9 +108,9 @@ export function createServer(configPath?: string): McpServer {
     }
   );
 
-  // --- Tool: clawchat_list_groups ---
+  // --- Tool: agentchat_list_groups ---
   server.tool(
-    "clawchat_list_groups",
+    "agentchat_list_groups",
     "List all groups you belong to.",
     {},
     async () => {
@@ -119,9 +119,9 @@ export function createServer(configPath?: string): McpServer {
     }
   );
 
-  // --- Tool: clawchat_invite ---
+  // --- Tool: agentchat_invite ---
   server.tool(
-    "clawchat_invite",
+    "agentchat_invite",
     "Generate an invite token for a group. Share the token out-of-band (DM, email) with the invitee.",
     {
       group_slug: z.string().describe("Group to invite to"),
@@ -135,9 +135,9 @@ export function createServer(configPath?: string): McpServer {
     }
   );
 
-  // --- Tool: clawchat_join ---
+  // --- Tool: agentchat_join ---
   server.tool(
-    "clawchat_join",
+    "agentchat_join",
     "Join a group using an invite token. Writes group credentials to local config.",
     {
       invite_token: z.string().describe("Invite token received from another user"),

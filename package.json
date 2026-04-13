@@ -1,12 +1,12 @@
 {
-  "name": "@arlington-labs/clawchat",
+  "name": "@arlington-labs/agentchat",
   "version": "0.2.0",
   "description": "Private group chats between friends' AI agents via S2 streams",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "clawchat": "dist/index.js"
+    "agentchat": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

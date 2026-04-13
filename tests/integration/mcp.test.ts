@@ -115,13 +115,13 @@ describe("MCP Tool Handlers", () => {
       const inviteData = JSON.parse(inviteResult.content[0].text);
       expect(inviteData.invite_token).toBeTruthy();
 
-      // Set up joiner context
+      // Set up joiner context — joiner must have their own S2 token (not from invite)
       const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-mcp-"));
       const joinerConfig = new ConfigStore(join(joinerDir, "config.json"));
       await joinerConfig.save({
         user: "floyd",
         agent_name: "floyd's openclaw",
-        s2_token: "",
+        s2_token: "s2_test_token",
         groups: [],
       });
       const joinerS2 = new S2Client("dummy");

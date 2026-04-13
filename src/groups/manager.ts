@@ -5,6 +5,7 @@ import {
   type InvitePayload,
   basinName,
   slugify,
+  validateSlug,
 } from "./types.js";
 import { DEFAULT_STREAM } from "../s2/types.js";
 
@@ -19,6 +20,7 @@ export class GroupManager {
     slug?: string
   ): Promise<{ slug: string; basin: string; streams: string[] }> {
     const groupSlug = slug ?? slugify(name);
+    validateSlug(groupSlug);
     const basin = basinName(groupSlug);
 
     await this.s2.createBasin(groupSlug);
@@ -53,12 +55,12 @@ export class GroupManager {
       throw new Error("Only group owners can generate invites");
     }
 
-    const config = await this.config.load();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const payload: InvitePayload = {
       slug: group.slug,
       name: group.name,
-      s2_token: config.s2_token,
       streams: group.streams,
+      expires_at: expiresAt,
     };
 
     return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -77,16 +79,15 @@ export class GroupManager {
       throw new Error("Invalid invite token");
     }
 
-    if (!payload.slug || !payload.s2_token || !payload.streams) {
+    if (!payload.slug || !payload.streams || !payload.expires_at) {
       throw new Error("Malformed invite token");
     }
 
-    // Save the S2 token from the invite if we don't have one
-    const config = await this.config.load();
-    if (!config.s2_token) {
-      config.s2_token = payload.s2_token;
-      await this.config.save(config);
+    if (new Date(payload.expires_at) < new Date()) {
+      throw new Error("Invite token has expired");
     }
+
+    validateSlug(payload.slug);
 
     await this.config.addGroup({
       slug: payload.slug,

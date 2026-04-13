@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ConfigStore } from "../../src/config/store.js";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -114,6 +114,20 @@ describe("ConfigStore", () => {
 
     const group = await store.getGroup("my-group");
     expect(group!.streams).toEqual(["general"]);
+  });
+
+  it("sets file permissions to 0o600 on save", async () => {
+    await store.save({
+      user: "edgar",
+      agent_name: "edgar's openclaw",
+      s2_token: "s2_test",
+      groups: [],
+    });
+
+    const stats = await stat(join(tempDir, "config.json"));
+    // 0o600 = owner read+write only (octal 33024 on macOS = 0o100600)
+    const perms = stats.mode & 0o777;
+    expect(perms).toBe(0o600);
   });
 
   it("returns identity", async () => {

@@ -98,8 +98,15 @@ describe("GroupManager", () => {
         Buffer.from(token, "base64url").toString("utf-8")
       );
       expect(decoded.slug).toBe("friends");
-      expect(decoded.s2_token).toBe("s2_test_token");
+      expect(decoded.s2_token).toBeUndefined();
       expect(decoded.streams).toContain("general");
+      expect(decoded.expires_at).toBeTruthy();
+      // Verify expiry is ~7 days from now
+      const expiry = new Date(decoded.expires_at);
+      const sixDays = Date.now() + 6 * 24 * 60 * 60 * 1000;
+      const eightDays = Date.now() + 8 * 24 * 60 * 60 * 1000;
+      expect(expiry.getTime()).toBeGreaterThan(sixDays);
+      expect(expiry.getTime()).toBeLessThan(eightDays);
 
       // Join as a new user (using a separate config)
       const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-"));
@@ -126,9 +133,9 @@ describe("GroupManager", () => {
       expect(joinerGroup).toBeDefined();
       expect(joinerGroup!.role).toBe("member");
 
-      // Verify S2 token was saved from invite
+      // Verify S2 token was NOT saved from invite (no longer in payload)
       const joinerFullConfig = await joinerConfig.load();
-      expect(joinerFullConfig.s2_token).toBe("s2_test_token");
+      expect(joinerFullConfig.s2_token).toBe("");
 
       await rm(joinerDir, { recursive: true, force: true });
     });
@@ -151,6 +158,60 @@ describe("GroupManager", () => {
       await expect(
         manager.joinGroup("not-valid-base64!!!")
       ).rejects.toThrow();
+    });
+
+    it("rejects expired invite tokens", async () => {
+      const expiredPayload = {
+        slug: "friends",
+        name: "Friends",
+        streams: ["general"],
+        expires_at: new Date(Date.now() - 1000).toISOString(),
+      };
+      const token = Buffer.from(JSON.stringify(expiredPayload)).toString("base64url");
+
+      await expect(manager.joinGroup(token)).rejects.toThrow("expired");
+    });
+  });
+
+  describe("slug validation", () => {
+    it("rejects slugs with uppercase letters", async () => {
+      await expect(
+        manager.createGroup("Test", "INVALID")
+      ).rejects.toThrow("Slug must be 2-63 chars");
+    });
+
+    it("rejects single-character slugs", async () => {
+      await expect(
+        manager.createGroup("Test", "a")
+      ).rejects.toThrow("Slug must be 2-63 chars");
+    });
+
+    it("rejects slugs starting with hyphens", async () => {
+      await expect(
+        manager.createGroup("Test", "-bad-slug")
+      ).rejects.toThrow("Slug must be 2-63 chars");
+    });
+
+    it("rejects slugs with special characters", async () => {
+      await expect(
+        manager.createGroup("Test", "bad_slug!")
+      ).rejects.toThrow("Slug must be 2-63 chars");
+    });
+
+    it("accepts valid slugs", async () => {
+      const result = await manager.createGroup("Test", "valid-slug-123");
+      expect(result.slug).toBe("valid-slug-123");
+    });
+
+    it("rejects invalid slugs in invite tokens", async () => {
+      const payload = {
+        slug: "INVALID",
+        name: "Bad",
+        streams: ["general"],
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      };
+      const token = Buffer.from(JSON.stringify(payload)).toString("base64url");
+      await expect(manager.joinGroup(token)).rejects.toThrow("Slug must be 2-63 chars");
     });
   });
 });

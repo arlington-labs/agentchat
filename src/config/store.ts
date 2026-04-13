@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { AgentChatConfig, GroupConfig } from "../groups/types.js";
@@ -36,6 +36,7 @@ export class ConfigStore {
   async save(config: AgentChatConfig): Promise<void> {
     await mkdir(this.configDir, { recursive: true });
     await writeFile(this.configPath, JSON.stringify(config, null, 2), "utf-8");
+    await chmod(this.configPath, 0o600);
   }
 
   async getGroup(slug: string): Promise<GroupConfig | undefined> {

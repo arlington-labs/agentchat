@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — 2026-04-13
+
+### Security Fixes
+- Remove S2 token from invite payloads — tokens no longer leak via invites
+- Set config file permissions to 0o600 after save
+- Add 7-day expiry to invite tokens with validation on decode
+- Add `.env` and `.env.*` to `.gitignore`
+- Enforce slug validation regex (`^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`) in createGroup/joinGroup
+- S2_TOKEN env var takes precedence over config file token in getContext()
+
+### Tests
+- 8 new security-focused unit/integration tests (45 total, was 37 mock)
+
 ## 0.2.0 — 2026-04-13
 
 ### Features

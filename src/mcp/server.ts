@@ -18,7 +18,7 @@ export function createServer(configPath?: string): McpServer {
 
   const server = new McpServer({
     name: "agentchat",
-    version: "0.1.0",
+    version: "0.3.0",
   });
 
   // Lazy-initialize S2 client and group manager on first tool call
@@ -26,10 +26,10 @@ export function createServer(configPath?: string): McpServer {
 
   async function getContext(): Promise<ToolContext> {
     if (ctx) return ctx;
-    const token = await config.getS2Token();
+    const token = process.env.S2_TOKEN || (await config.getS2Token());
     if (!token) {
       throw new Error(
-        "No S2 token configured. Set s2_token in ~/.agentchat/config.json or join a group with agentchat_join."
+        "No S2 token configured. Set S2_TOKEN env var, set s2_token in ~/.agentchat/config.json, or join a group with agentchat_join."
       );
     }
     const s2 = new S2Client(token);

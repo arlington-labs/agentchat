@@ -17,8 +17,18 @@ export interface AgentChatConfig {
 export interface InvitePayload {
   slug: string;
   name: string;
-  s2_token: string;
   streams: string[];
+  expires_at: string;
+}
+
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
+
+export function validateSlug(slug: string): void {
+  if (!SLUG_RE.test(slug)) {
+    throw new Error(
+      "Slug must be 2-63 chars, lowercase alphanumeric and hyphens only"
+    );
+  }
 }
 
 export function basinName(slug: string): string {

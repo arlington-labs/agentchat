@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ConfigStore } from "../../src/config/store.js";
+import { ConfigStore } from "../../test-harness/config/store.js";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

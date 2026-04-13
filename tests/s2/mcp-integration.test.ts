@@ -1,8 +1,8 @@
 import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer } from "../../src/mcp/server.js";
-import { S2Client } from "../../src/s2/client.js";
+import { createServer } from "../../test-harness/mcp/server.js";
+import { S2Client } from "../../test-harness/s2/client.js";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

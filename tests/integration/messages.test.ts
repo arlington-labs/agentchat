@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { ConfigStore } from "../../src/config/store.js";
+import { ConfigStore } from "../../test-harness/config/store.js";
 import {
   handleSendMessage,
   handleReadMessages,
   type ToolContext,
-} from "../../src/mcp/tools.js";
-import { GroupManager } from "../../src/groups/manager.js";
-import { S2Client } from "../../src/s2/client.js";
-import type { AgentChatMessage } from "../../src/s2/types.js";
+} from "../../test-harness/mcp/tools.js";
+import { GroupManager } from "../../test-harness/groups/manager.js";
+import { S2Client } from "../../test-harness/s2/client.js";
+import type { AgentChatMessage } from "../../test-harness/s2/types.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

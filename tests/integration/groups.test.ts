@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { ConfigStore } from "../../src/config/store.js";
-import { GroupManager } from "../../src/groups/manager.js";
-import { S2Client } from "../../src/s2/client.js";
+import { ConfigStore } from "../../test-harness/config/store.js";
+import { GroupManager } from "../../test-harness/groups/manager.js";
+import { S2Client } from "../../test-harness/s2/client.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 // Mock S2Client
-vi.mock("../../src/s2/client.js", () => {
+vi.mock("../../test-harness/s2/client.js", () => {
   return {
     S2Client: vi.fn().mockImplementation(() => ({
       createBasin: vi.fn().mockResolvedValue({

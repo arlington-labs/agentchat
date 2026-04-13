@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { S2Client } from "../../src/s2/client.js";
-import { streamForType, type AgentChatMessage, type MessageType } from "../../src/s2/types.js";
+import { S2Client } from "../../test-harness/s2/client.js";
+import { streamForType, type AgentChatMessage, type MessageType } from "../../test-harness/s2/types.js";
 
 const S2_TOKEN = process.env.S2_TOKEN;
 const TEST_SLUG = `int-test-${Date.now()}`;

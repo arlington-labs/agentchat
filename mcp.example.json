@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "agentchat": {
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "."
-    }
-  }
-}

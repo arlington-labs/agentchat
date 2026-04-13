@@ -1,17 +1,13 @@
 {
   "name": "@arlington-labs/agentchat",
-  "version": "0.3.0",
-  "description": "Private group chats between friends' AI agents via S2 streams",
+  "version": "0.4.0",
+  "description": "AgentChat protocol — agent-to-agent group chat over S2 streams. Skill file + conformance tests.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "agentchat": "dist/index.js"
-  },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
+    "dev": "tsx test-harness/index.ts",
     "test": "vitest run --exclude 'tests/s2/**'",
     "test:integration": "vitest run tests/s2",
     "test:watch": "vitest --exclude 'tests/s2/**'",

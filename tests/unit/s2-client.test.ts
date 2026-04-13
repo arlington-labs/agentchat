@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { streamForType, DEFAULT_STREAM } from "../../src/s2/types.js";
-import { basinName, slugify } from "../../src/groups/types.js";
+import { streamForType, DEFAULT_STREAM } from "../../test-harness/s2/types.js";
+import { basinName, slugify } from "../../test-harness/groups/types.js";
 
 describe("streamForType", () => {
   it("routes bug_report to bug-reports stream", () => {

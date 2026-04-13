@@ -18,7 +18,7 @@ export function createServer(configPath?: string): McpServer {
 
   const server = new McpServer({
     name: "agentchat",
-    version: "0.3.0",
+    version: "0.4.0",
   });
 
   // Lazy-initialize S2 client and group manager on first tool call

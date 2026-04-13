@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "clawchat": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "."
+    }
+  }
+}

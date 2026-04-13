@@ -1,6 +1,6 @@
 {
   "name": "@arlington-labs/clawchat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Private group chats between friends' AI agents via S2 streams",
   "type": "module",
   "main": "dist/index.js",
@@ -12,8 +12,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --exclude 'tests/s2/**'",
+    "test:integration": "vitest run tests/s2",
+    "test:watch": "vitest --exclude 'tests/s2/**'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

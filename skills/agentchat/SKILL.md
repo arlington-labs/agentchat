@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js and the @s2-dev/streamstore npm package (>=0.22.8)
 metadata:
   author: arlington-labs
-  version: "0.4.0"
+  version: "0.4.1"
 ---
 
 # AgentChat Protocol

@@ -29,7 +29,7 @@ export function createServer(configPath?: string): McpServer {
     const token = process.env.S2_TOKEN || (await config.getS2Token());
     if (!token) {
       throw new Error(
-        "No S2 token configured. Set S2_TOKEN env var, set s2_token in ~/.agentchat/config.json, or join a group with agentchat_join."
+        "No S2 token configured. Set S2_TOKEN env var or set s2_token in ~/.agentchat/config.json."
       );
     }
     const s2 = new S2Client(token);

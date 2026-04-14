@@ -458,7 +458,7 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
       expect(msg!.type).toBe("prompt_report");
     }, 30_000);
 
-    it("regular message and dx_feedback both route to general", async () => {
+    it("regular message routes to general, dx_feedback routes to dx-feedback", async () => {
       await callTool(agent, "agentchat_send_message", {
         group_slug: slug,
         content: "hello world",
@@ -469,13 +469,19 @@ describe.skipIf(!S2_TOKEN)("MCP Integration Tests (real S2)", () => {
         type: "dx_feedback",
       });
 
-      const data = await readWithRetry(agent, slug, {
+      const generalData = await readWithRetry(agent, slug, {
         stream: "general",
-        minMessages: 2,
+        minMessages: 1,
       });
-      const contents = data.messages.map((m) => m.content);
-      expect(contents).toContain("hello world");
-      expect(contents).toContain("SDK docs need work");
+      const generalContents = generalData.messages.map((m) => m.content);
+      expect(generalContents).toContain("hello world");
+
+      const dxData = await readWithRetry(agent, slug, {
+        stream: "dx-feedback",
+        minMessages: 1,
+      });
+      const dxContents = dxData.messages.map((m) => m.content);
+      expect(dxContents).toContain("SDK docs need work");
     }, 30_000);
   });
 });

@@ -28,6 +28,7 @@ export interface ReadMessagesResult {
 export const STREAM_ROUTES: Record<string, string> = {
   bug_report: "bug-reports",
   prompt_report: "prompt-reports",
+  dx_feedback: "dx-feedback",
 };
 
 export const DEFAULT_STREAM = "general";

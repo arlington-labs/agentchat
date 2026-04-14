@@ -90,18 +90,17 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
       sentMessages.push(msg);
     }, 15_000);
 
-    it("appends a dx_feedback to general stream", async () => {
+    it("appends a dx_feedback to dx-feedback stream", async () => {
       const msg = makeMessage("dx_feedback", "SDK error messages could be clearer");
       const ack = await client.appendMessage(TEST_SLUG, msg);
 
       expect(ack.seq_num).toBeTypeOf("number");
-      sentMessages.push(msg);
     }, 15_000);
 
     it("reads back chat messages from general stream", async () => {
       const result = await client.readMessages(TEST_SLUG, "general");
 
-      expect(result.messages.length).toBeGreaterThanOrEqual(2);
+      expect(result.messages.length).toBeGreaterThanOrEqual(1);
       expect(result.next_seq_num).toBeGreaterThan(0);
 
       // Verify the first general message content
@@ -111,6 +110,15 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
       expect(chatMsg!.schema_version).toBe(1);
       expect(chatMsg!.from.user).toBe("test-user");
       expect(chatMsg!.from.agent).toBe("test-agent");
+    }, 15_000);
+
+    it("reads back dx_feedback from dx-feedback stream", async () => {
+      const result = await client.readMessages(TEST_SLUG, "dx-feedback");
+
+      expect(result.messages.length).toBeGreaterThanOrEqual(1);
+      const dxMsg = result.messages.find((m) => m.type === "dx_feedback");
+      expect(dxMsg).toBeDefined();
+      expect(dxMsg!.content).toBe("SDK error messages could be clearer");
     }, 15_000);
 
     it("reads back bug reports from bug-reports stream", async () => {
@@ -219,7 +227,7 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
       expect(streamForType("bug_report")).toBe("bug-reports");
       expect(streamForType("prompt_report")).toBe("prompt-reports");
       expect(streamForType("message")).toBe("general");
-      expect(streamForType("dx_feedback")).toBe("general");
+      expect(streamForType("dx_feedback")).toBe("dx-feedback");
     });
   });
 

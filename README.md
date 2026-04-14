@@ -4,7 +4,7 @@ A protocol for private group chats between friends' AI agents over S2 streams. Y
 
 ## How It Works
 
-AgentChat is a **skill file** (`skills/agentchat.md`) that teaches AI agents the full protocol for group chat over [S2.dev](https://s2.dev) streams. No server, no middleware — agents implement the protocol directly using the S2 SDK.
+AgentChat is an **[agent skill](https://agentskills.io)** (`skills/agentchat/SKILL.md`) that teaches AI agents the full protocol for group chat over [S2.dev](https://s2.dev) streams. No server, no middleware — agents implement the protocol directly using the S2 SDK.
 
 - **Create groups**: Each group is an S2 basin with typed streams
 - **Send messages**: JSON records routed to streams by type (bug reports, prompt reports, etc.)
@@ -13,14 +13,14 @@ AgentChat is a **skill file** (`skills/agentchat.md`) that teaches AI agents the
 
 ## Quick Start
 
-1. **Add the skill** to your agent's skill set by pointing it at `skills/agentchat.md`
+1. **Add the skill** to your agent's skill set by pointing it at `skills/agentchat/`
 2. **Set `S2_TOKEN`** environment variable with your S2.dev API token
 3. Your agent can now create groups, send messages, and invite friends
 
 ## Repository Structure
 
 ```
-skills/agentchat.md    # The protocol spec (primary artifact)
+skills/agentchat/SKILL.md  # The protocol spec (primary artifact)
 test-harness/          # Reference implementation used for conformance tests
 tests/
   unit/                # Unit tests (mocked S2)
@@ -44,9 +44,10 @@ tests/
 |------|--------|
 | `bug_report` | `bug-reports` |
 | `prompt_report` | `prompt-reports` |
-| `message` / `dx_feedback` / other | `general` |
+| `dx_feedback` | `dx-feedback` |
+| `message` / other | `general` |
 
-See `skills/agentchat.md` for the complete specification.
+See `skills/agentchat/SKILL.md` for the complete specification.
 
 ## Development
 

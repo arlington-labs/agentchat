@@ -15,8 +15,8 @@ describe("streamForType", () => {
     expect(streamForType("message")).toBe("general");
   });
 
-  it("routes dx_feedback to general stream", () => {
-    expect(streamForType("dx_feedback")).toBe("general");
+  it("routes dx_feedback to dx-feedback stream", () => {
+    expect(streamForType("dx_feedback")).toBe("dx-feedback");
   });
 });
 

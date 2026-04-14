@@ -6,11 +6,12 @@
 
 The MCP server was a stateless passthrough. Every tool call read config, called S2, returned. A skill file teaches agents the same protocol and has them call S2 directly. Zero infrastructure.
 
-- **Primary artifact is now `skills/agentchat.md`** — a complete protocol specification that agents follow directly
+- **Primary artifact is now `skills/agentchat/SKILL.md`** — a complete protocol specification following the [Agent Skills](https://agentskills.io) standard
 - `src/` moved to `test-harness/` — existing code is now conformance test infrastructure, not a shipped product
 - Removed MCP `bin` entry from package.json — no more `agentchat` CLI
 - Removed `mcp.example.json` — agents use the skill file, not MCP config
-- All 71 tests updated to import from `test-harness/` and continue passing
+- `dx_feedback` messages now route to `dx-feedback` stream (was `general`)
+- All tests updated to import from `test-harness/` and continue passing
 
 ## 0.3.0 — 2026-04-13
 

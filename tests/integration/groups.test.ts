@@ -17,6 +17,7 @@ vi.mock("../../test-harness/s2/client.js", () => {
       deleteBasin: vi.fn().mockResolvedValue(undefined),
       createStream: vi.fn().mockResolvedValue(undefined),
       listStreams: vi.fn().mockResolvedValue([]),
+      issueAccessToken: vi.fn().mockResolvedValue("scoped-test-token"),
     })),
   };
 });
@@ -33,7 +34,7 @@ describe("GroupManager", () => {
     await config.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test_token",
+      s2_access_token: "s2_test_token",
       groups: [],
     });
     s2 = new S2Client("s2_test_token");
@@ -51,7 +52,6 @@ describe("GroupManager", () => {
 
       expect(result.slug).toBe("test-group");
       expect(result.basin).toBe("agentchat-test-group");
-      expect(result.streams).toContain("general");
       expect(s2.createBasin).toHaveBeenCalledWith("test-group");
       expect(s2.createStream).toHaveBeenCalledWith("test-group", "general");
     });
@@ -85,11 +85,9 @@ describe("GroupManager", () => {
   });
 
   describe("invite/join flow", () => {
-    it("generates and accepts invite tokens", async () => {
-      // Create group as owner
+    it("generates invite with scoped token and joins successfully", async () => {
       await manager.createGroup("Friends", "friends");
 
-      // Generate invite
       const token = await manager.generateInvite("friends");
       expect(token).toBeTruthy();
 
@@ -98,23 +96,22 @@ describe("GroupManager", () => {
         Buffer.from(token, "base64url").toString("utf-8")
       );
       expect(decoded.slug).toBe("friends");
-      expect(decoded.s2_token).toBeUndefined();
-      expect(decoded.streams).toContain("general");
-      expect(decoded.expires_at).toBeTruthy();
-      // Verify expiry is ~7 days from now
-      const expiry = new Date(decoded.expires_at);
-      const sixDays = Date.now() + 6 * 24 * 60 * 60 * 1000;
-      const eightDays = Date.now() + 8 * 24 * 60 * 60 * 1000;
-      expect(expiry.getTime()).toBeGreaterThan(sixDays);
-      expect(expiry.getTime()).toBeLessThan(eightDays);
+      expect(decoded.s2_access_token).toBe("scoped-test-token");
+      expect(decoded.name).toBe("Friends");
 
-      // Join as a new user (using a separate config)
+      // Verify issueAccessToken was called with correct args
+      expect(s2.issueAccessToken).toHaveBeenCalledWith("friends", [
+        "read",
+        "append",
+      ]);
+
+      // Join as a new user
       const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-"));
       const joinerConfig = new ConfigStore(join(joinerDir, "config.json"));
       await joinerConfig.save({
         user: "floyd",
         agent_name: "floyd's openclaw",
-        s2_token: "",
+        s2_access_token: "",
         groups: [],
       });
 
@@ -126,26 +123,20 @@ describe("GroupManager", () => {
 
       expect(joinResult.group_slug).toBe("friends");
       expect(joinResult.basin).toBe("agentchat-friends");
-      expect(joinResult.streams).toContain("general");
 
-      // Verify joiner config was updated
+      // Verify joiner config has the scoped token
       const joinerGroup = await joinerConfig.getGroup("friends");
       expect(joinerGroup).toBeDefined();
       expect(joinerGroup!.role).toBe("member");
-
-      // Verify S2 token was NOT saved from invite (no longer in payload)
-      const joinerFullConfig = await joinerConfig.load();
-      expect(joinerFullConfig.s2_token).toBe("");
+      expect(joinerGroup!.s2_access_token).toBe("scoped-test-token");
 
       await rm(joinerDir, { recursive: true, force: true });
     });
 
     it("rejects invites from non-owners", async () => {
-      // Add a group as member
       await config.addGroup({
         slug: "someone-elses",
         name: "Someone's Group",
-        streams: ["general"],
         role: "member",
       });
 
@@ -160,16 +151,13 @@ describe("GroupManager", () => {
       ).rejects.toThrow();
     });
 
-    it("rejects expired invite tokens", async () => {
-      const expiredPayload = {
+    it("rejects invite tokens missing s2_access_token", async () => {
+      const payload = {
         slug: "friends",
         name: "Friends",
-        streams: ["general"],
-        expires_at: new Date(Date.now() - 1000).toISOString(),
       };
-      const token = Buffer.from(JSON.stringify(expiredPayload)).toString("base64url");
-
-      await expect(manager.joinGroup(token)).rejects.toThrow("expired");
+      const token = Buffer.from(JSON.stringify(payload)).toString("base64url");
+      await expect(manager.joinGroup(token)).rejects.toThrow("Malformed invite token");
     });
   });
 
@@ -207,8 +195,7 @@ describe("GroupManager", () => {
       const payload = {
         slug: "INVALID",
         name: "Bad",
-        streams: ["general"],
-        expires_at: new Date(Date.now() + 86400000).toISOString(),
+        s2_access_token: "some-token",
       };
       const token = Buffer.from(JSON.stringify(payload)).toString("base64url");
       await expect(manager.joinGroup(token)).rejects.toThrow("Slug must be 2-63 chars");

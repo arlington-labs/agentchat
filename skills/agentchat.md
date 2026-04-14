@@ -149,6 +149,7 @@ const { accessToken } = await accountS2.accessTokens.issue({
   id: tokenId,
   scope: {
     basins: { exact: `agentchat-${slug}` },
+    streams: { prefix: "" },
     ops: ["read", "append"],
   },
 });

@@ -24,6 +24,7 @@ vi.mock("../../test-harness/s2/client.js", () => {
       deleteBasin: vi.fn().mockResolvedValue(undefined),
       createStream: vi.fn().mockResolvedValue(undefined),
       listStreams: vi.fn().mockResolvedValue([]),
+      issueAccessToken: vi.fn().mockResolvedValue("scoped-test-token"),
       appendMessage: vi.fn().mockResolvedValue({
         seq_num: 0,
         timestamp: new Date().toISOString(),
@@ -47,7 +48,7 @@ describe("MCP Tool Handlers", () => {
     await config.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test_token",
+      s2_access_token: "s2_test_token",
       groups: [],
     });
     const s2 = new S2Client("s2_test_token");
@@ -61,14 +62,13 @@ describe("MCP Tool Handlers", () => {
   });
 
   describe("agentchat_create_group", () => {
-    it("creates a group and returns slug, basin, streams", async () => {
+    it("creates a group and returns slug and basin", async () => {
       const result = await handleCreateGroup(ctx, { name: "Friends" });
 
       expect(result.isError).toBeUndefined();
       const data = JSON.parse(result.content[0].text);
       expect(data.slug).toBe("friends");
       expect(data.basin).toBe("agentchat-friends");
-      expect(data.streams).toContain("general");
     });
 
     it("accepts custom slug", async () => {
@@ -115,13 +115,13 @@ describe("MCP Tool Handlers", () => {
       const inviteData = JSON.parse(inviteResult.content[0].text);
       expect(inviteData.invite_token).toBeTruthy();
 
-      // Set up joiner context — joiner must have their own S2 token (not from invite)
+      // Set up joiner context — joiner does not need an account token
       const joinerDir = await mkdtemp(join(tmpdir(), "agentchat-joiner-mcp-"));
       const joinerConfig = new ConfigStore(join(joinerDir, "config.json"));
       await joinerConfig.save({
         user: "floyd",
         agent_name: "floyd's openclaw",
-        s2_token: "s2_test_token",
+        s2_access_token: "",
         groups: [],
       });
       const joinerS2 = new S2Client("dummy");

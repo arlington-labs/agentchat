@@ -15,6 +15,22 @@ export class S2Client {
     this.s2 = new S2({ accessToken: token });
   }
 
+  async issueAccessToken(
+    slug: string,
+    ops: string[]
+  ): Promise<string> {
+    const tokenId = `agentchat-${slug}-${Date.now()}`;
+    const { accessToken } = await this.s2.accessTokens.issue({
+      id: tokenId,
+      scope: {
+        basins: { exact: basinName(slug) },
+        streams: { prefix: "" },
+        ops: ops as any,
+      },
+    });
+    return accessToken;
+  }
+
   async createBasin(slug: string): Promise<BasinInfo> {
     const name = basinName(slug);
     const response = await this.s2.basins.create({

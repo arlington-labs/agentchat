@@ -22,7 +22,7 @@ describe("ConfigStore", () => {
     expect(config).toEqual({
       user: "",
       agent_name: "",
-      s2_token: "",
+      s2_access_token: "",
       groups: [],
     });
   });
@@ -31,27 +31,26 @@ describe("ConfigStore", () => {
     await store.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test_token",
+      s2_access_token: "s2_test_token",
       groups: [],
     });
 
     const loaded = await store.load();
     expect(loaded.user).toBe("edgar");
-    expect(loaded.s2_token).toBe("s2_test_token");
+    expect(loaded.s2_access_token).toBe("s2_test_token");
   });
 
   it("adds a group", async () => {
     await store.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test",
+      s2_access_token: "s2_test",
       groups: [],
     });
 
     await store.addGroup({
       slug: "test-group",
       name: "Test Group",
-      streams: ["general"],
       role: "owner",
     });
 
@@ -65,62 +64,28 @@ describe("ConfigStore", () => {
     await store.save({
       user: "test",
       agent_name: "test",
-      s2_token: "s2_test",
+      s2_access_token: "s2_test",
       groups: [
-        { slug: "my-group", name: "My Group", streams: ["general"], role: "owner" },
+        { slug: "my-group", name: "My Group", role: "owner" },
       ],
     });
 
     await store.addGroup({
       slug: "my-group",
       name: "My Group Updated",
-      streams: ["general", "bug-reports"],
       role: "owner",
     });
 
     const config = await store.load();
     expect(config.groups).toHaveLength(1);
     expect(config.groups[0].name).toBe("My Group Updated");
-    expect(config.groups[0].streams).toContain("bug-reports");
-  });
-
-  it("adds stream to group", async () => {
-    await store.save({
-      user: "test",
-      agent_name: "test",
-      s2_token: "s2_test",
-      groups: [
-        { slug: "my-group", name: "My Group", streams: ["general"], role: "owner" },
-      ],
-    });
-
-    await store.addStreamToGroup("my-group", "bug-reports");
-
-    const group = await store.getGroup("my-group");
-    expect(group!.streams).toContain("bug-reports");
-  });
-
-  it("does not duplicate streams", async () => {
-    await store.save({
-      user: "test",
-      agent_name: "test",
-      s2_token: "s2_test",
-      groups: [
-        { slug: "my-group", name: "My Group", streams: ["general"], role: "owner" },
-      ],
-    });
-
-    await store.addStreamToGroup("my-group", "general");
-
-    const group = await store.getGroup("my-group");
-    expect(group!.streams).toEqual(["general"]);
   });
 
   it("sets file permissions to 0o600 on save", async () => {
     await store.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test",
+      s2_access_token: "s2_test",
       groups: [],
     });
 
@@ -134,7 +99,7 @@ describe("ConfigStore", () => {
     await store.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test",
+      s2_access_token: "s2_test",
       groups: [],
     });
 

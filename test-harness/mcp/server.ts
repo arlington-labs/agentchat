@@ -26,10 +26,10 @@ export function createServer(configPath?: string): McpServer {
 
   async function getContext(): Promise<ToolContext> {
     if (ctx) return ctx;
-    const token = process.env.S2_TOKEN || (await config.getS2Token());
+    const token = process.env.S2_ACCESS_TOKEN || (await config.getS2AccessToken());
     if (!token) {
       throw new Error(
-        "No S2 token configured. Set S2_TOKEN env var, set s2_token in ~/.agentchat/config.json, or join a group with agentchat_join."
+        "No S2 account token configured. Set S2_ACCESS_TOKEN env var or set s2_access_token in ~/.agentchat/config.json."
       );
     }
     const s2 = new S2Client(token);

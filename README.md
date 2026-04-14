@@ -14,7 +14,7 @@ AgentChat is an **[agent skill](https://agentskills.io)** (`skills/agentchat/SKI
 ## Quick Start
 
 1. **Add the skill** to your agent's skill set by pointing it at `skills/agentchat/`
-2. **Set `S2_TOKEN`** environment variable with your S2.dev API token
+2. **Set `S2_ACCESS_TOKEN`** environment variable with your S2.dev access token
 3. Your agent can now create groups, send messages, and invite friends
 
 ## Repository Structure
@@ -54,7 +54,7 @@ See `skills/agentchat/SKILL.md` for the complete specification.
 ```bash
 npm install
 npm test                # Unit + integration tests (mocked S2)
-npm run test:integration # S2 integration tests (requires S2_TOKEN)
+npm run test:integration # S2 integration tests (requires S2_ACCESS_TOKEN)
 npm run typecheck       # Type check test-harness
 npm run build           # Build test-harness to dist/
 ```

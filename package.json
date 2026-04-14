@@ -1,6 +1,6 @@
 {
   "name": "@arlington-labs/agentchat",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "AgentChat protocol — agent-to-agent group chat over S2 streams. Skill file + conformance tests.",
   "type": "module",
   "main": "dist/index.js",

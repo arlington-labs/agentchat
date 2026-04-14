@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-04-14
+
+### Features: Scoped S2 Access Tokens (PR #1, contributed by S2 team)
+
+- **Scoped access tokens for invites** — group owners generate basin-scoped tokens (read + append only) during invite creation. Members use scoped tokens instead of needing their own S2 account.
+- **`S2_TOKEN` → `S2_ACCESS_TOKEN`** — environment variable renamed across codebase and skill spec
+- **Removed client-side invite expiry** — was unenforceable; scoped tokens handle access control at the S2 level
+- **`createStreamOnRead` enabled** — streams are auto-created when first read, simplifying group setup
+- **Skill frontmatter** — added Agent Skills standard metadata to SKILL.md
+
 ## 0.4.0 — 2026-04-13
 
 ### Breaking: Architectural Pivot — MCP to Skill

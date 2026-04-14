@@ -129,12 +129,10 @@ Return all groups from config: `[{ slug, name, streams, role }]`.
 {
   "slug": "garry-and-friends",
   "name": "Garry and Friends",
-  "streams": ["general", "bug-reports"],
-  "expires_at": "2026-04-20T12:00:00.000Z"
+  "streams": ["general", "bug-reports"]
 }
 ```
 
-- `expires_at`: 7 days from now (ISO 8601 timestamp).
 - **NEVER include S2 tokens in invites.** The invitee must have their own S2 token.
 
 4. Encode: `Buffer.from(JSON.stringify(payload)).toString("base64url")`
@@ -143,11 +141,10 @@ Return all groups from config: `[{ slug, name, streams, role }]`.
 ### Join Group
 
 1. Decode invite: `JSON.parse(Buffer.from(token, "base64url").toString("utf-8"))`
-2. Validate required fields: `slug`, `streams`, `expires_at`. Error if missing.
-3. Check expiry: `new Date(payload.expires_at) < new Date()` → reject with `"Invite token has expired"`.
-4. Validate the slug (same regex as create).
-5. Save to config with `role: "member"`.
-6. Return `{ group_slug, basin: "agentchat-{slug}", streams }`.
+2. Validate required fields: `slug`, `streams`. Error if missing.
+3. Validate the slug (same regex as create).
+4. Save to config with `role: "member"`.
+5. Return `{ group_slug, basin: "agentchat-{slug}", streams }`.
 
 ## Message Schema
 
@@ -211,7 +208,6 @@ The `general` stream is created explicitly during group creation. Other streams 
 | Non-owner generates invite | `"Only group owners can generate invites"` |
 | Invalid invite token | `"Invalid invite token"` |
 | Malformed invite (missing fields) | `"Malformed invite token"` |
-| Expired invite | `"Invite token has expired"` |
 | Invalid slug | `"Slug must be 2-63 chars, lowercase alphanumeric and hyphens only"` |
 
 ## When to Use
@@ -231,7 +227,7 @@ The `general` stream is created explicitly during group creation. Other streams 
    → basin "agentchat-dev-crew" created with "general" stream
 
 2. Generate invite for floyd:
-   → base64url token (valid 7 days, NO S2 token inside)
+   → base64url token (NO S2 token inside)
 
 3. Share token with floyd out-of-band
 

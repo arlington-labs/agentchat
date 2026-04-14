@@ -37,6 +37,7 @@ export class S2Client {
       basin: name,
       config: {
         createStreamOnAppend: true,
+        createStreamOnRead: true,
       },
     });
     return { name: response.name, scope: response.scope, state: response.state };

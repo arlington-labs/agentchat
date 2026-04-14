@@ -9,7 +9,7 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 const DEFAULT_CONFIG: AgentChatConfig = {
   user: "",
   agent_name: "",
-  s2_token: "",
+  s2_access_token: "",
   groups: [],
 };
 
@@ -55,18 +55,9 @@ export class ConfigStore {
     await this.save(config);
   }
 
-  async addStreamToGroup(slug: string, stream: string): Promise<void> {
+  async getS2AccessToken(): Promise<string> {
     const config = await this.load();
-    const group = config.groups.find((g) => g.slug === slug);
-    if (group && !group.streams.includes(stream)) {
-      group.streams.push(stream);
-      await this.save(config);
-    }
-  }
-
-  async getS2Token(): Promise<string> {
-    const config = await this.load();
-    return config.s2_token;
+    return config.s2_access_token;
   }
 
   async getIdentity(): Promise<{ user: string; agent: string }> {

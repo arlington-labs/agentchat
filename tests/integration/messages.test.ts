@@ -25,12 +25,11 @@ describe("Message operations", () => {
     await config.save({
       user: "edgar",
       agent_name: "edgar's openclaw",
-      s2_token: "s2_test_token",
+      s2_access_token: "s2_test_token",
       groups: [
         {
           slug: "test-group",
           name: "Test Group",
-          streams: ["general"],
           role: "owner",
         },
       ],

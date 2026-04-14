@@ -3,22 +3,21 @@ export type GroupRole = "owner" | "member";
 export interface GroupConfig {
   slug: string;
   name: string;
-  streams: string[];
   role: GroupRole;
+  s2_access_token?: string;
 }
 
 export interface AgentChatConfig {
   user: string;
   agent_name: string;
-  s2_token: string;
+  s2_access_token: string;
   groups: GroupConfig[];
 }
 
 export interface InvitePayload {
   slug: string;
   name: string;
-  streams: string[];
-  expires_at: string;
+  s2_access_token: string;
 }
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;

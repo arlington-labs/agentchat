@@ -2,18 +2,18 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { S2Client } from "../../test-harness/s2/client.js";
 import { streamForType, type AgentChatMessage, type MessageType } from "../../test-harness/s2/types.js";
 
-const S2_TOKEN = process.env.S2_TOKEN;
+const S2_ACCESS_TOKEN = process.env.S2_ACCESS_TOKEN;
 const TEST_SLUG = `int-test-${Date.now()}`;
 
-describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
+describe.skipIf(!S2_ACCESS_TOKEN)("S2 Integration Tests", () => {
   let client: S2Client;
 
   beforeAll(() => {
-    client = new S2Client(S2_TOKEN!);
+    client = new S2Client(S2_ACCESS_TOKEN!);
   });
 
   afterAll(async () => {
-    if (!S2_TOKEN) return;
+    if (!S2_ACCESS_TOKEN) return;
     try {
       await client.deleteBasin(TEST_SLUG);
     } catch {
@@ -237,7 +237,7 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
     const lifecycleSlug = `int-lifecycle-${Date.now()}`;
 
     afterAll(async () => {
-      if (!S2_TOKEN) return;
+      if (!S2_ACCESS_TOKEN) return;
       try {
         await client.deleteBasin(lifecycleSlug);
       } catch {
@@ -265,6 +265,62 @@ describe.skipIf(!S2_TOKEN)("S2 Integration Tests", () => {
       expect(result.messages[0].schema_version).toBe(1);
       expect(result.next_seq_num).toBeGreaterThan(0);
     }, 30_000);
+  });
+
+  // ── Scoped access tokens ───────────────────────────────────────
+
+  describe("scoped access tokens", () => {
+    const scopedSlug = `int-scoped-${Date.now()}`;
+
+    afterAll(async () => {
+      if (!S2_ACCESS_TOKEN) return;
+      try {
+        await client.deleteBasin(scopedSlug);
+      } catch {
+        // cleanup best-effort
+      }
+    }, 30_000);
+
+    it("issues a scoped token that can read and append", async () => {
+      // Owner creates basin and general stream
+      await client.createBasin(scopedSlug);
+      await client.createStream(scopedSlug, "general");
+
+      // Owner issues scoped token
+      const scopedToken = await client.issueAccessToken(scopedSlug, [
+        "read",
+        "append",
+      ]);
+      expect(scopedToken).toBeTruthy();
+
+      // Member uses scoped token
+      const memberClient = new S2Client(scopedToken);
+
+      // Member can append
+      const msg = makeMessage("message", "Hello from scoped token");
+      const ack = await memberClient.appendMessage(scopedSlug, msg);
+      expect(ack.seq_num).toBeTypeOf("number");
+
+      // Member can read
+      const result = await memberClient.readMessages(scopedSlug, "general");
+      expect(result.messages.length).toBeGreaterThanOrEqual(1);
+      const found = result.messages.find(
+        (m) => m.content === "Hello from scoped token"
+      );
+      expect(found).toBeDefined();
+    }, 30_000);
+
+    it("scoped token cannot create basins", async () => {
+      const scopedToken = await client.issueAccessToken(scopedSlug, [
+        "read",
+        "append",
+      ]);
+      const memberClient = new S2Client(scopedToken);
+
+      await expect(
+        memberClient.createBasin(`int-unauthorized-${Date.now()}`)
+      ).rejects.toThrow();
+    }, 15_000);
   });
 });
 

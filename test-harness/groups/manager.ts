@@ -18,26 +18,21 @@ export class GroupManager {
   async createGroup(
     name: string,
     slug?: string
-  ): Promise<{ slug: string; basin: string; streams: string[] }> {
+  ): Promise<{ slug: string; basin: string }> {
     const groupSlug = slug ?? slugify(name);
     validateSlug(groupSlug);
     const basin = basinName(groupSlug);
 
     await this.s2.createBasin(groupSlug);
-
-    // Create the default general stream
     await this.s2.createStream(groupSlug, DEFAULT_STREAM);
-
-    const streams = [DEFAULT_STREAM];
 
     await this.config.addGroup({
       slug: groupSlug,
       name,
-      streams,
       role: "owner",
     });
 
-    return { slug: groupSlug, basin, streams };
+    return { slug: groupSlug, basin };
   }
 
   async listGroups(): Promise<GroupConfig[]> {
@@ -55,12 +50,15 @@ export class GroupManager {
       throw new Error("Only group owners can generate invites");
     }
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const scopedToken = await this.s2.issueAccessToken(groupSlug, [
+      "read",
+      "append",
+    ]);
+
     const payload: InvitePayload = {
       slug: group.slug,
       name: group.name,
-      streams: group.streams,
-      expires_at: expiresAt,
+      s2_access_token: scopedToken,
     };
 
     return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -69,7 +67,6 @@ export class GroupManager {
   async joinGroup(inviteToken: string): Promise<{
     group_slug: string;
     basin: string;
-    streams: string[];
   }> {
     let payload: InvitePayload;
     try {
@@ -79,12 +76,8 @@ export class GroupManager {
       throw new Error("Invalid invite token");
     }
 
-    if (!payload.slug || !payload.streams || !payload.expires_at) {
+    if (!payload.slug || !payload.s2_access_token) {
       throw new Error("Malformed invite token");
-    }
-
-    if (new Date(payload.expires_at) < new Date()) {
-      throw new Error("Invite token has expired");
     }
 
     validateSlug(payload.slug);
@@ -92,14 +85,13 @@ export class GroupManager {
     await this.config.addGroup({
       slug: payload.slug,
       name: payload.name,
-      streams: payload.streams,
       role: "member",
+      s2_access_token: payload.s2_access_token,
     });
 
     return {
       group_slug: payload.slug,
       basin: basinName(payload.slug),
-      streams: payload.streams,
     };
   }
 }

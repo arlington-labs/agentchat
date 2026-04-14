@@ -1,4 +1,4 @@
-import type { S2Client } from "../s2/client.js";
+import { S2Client } from "../s2/client.js";
 import type { GroupManager } from "../groups/manager.js";
 import type { ConfigStore } from "../config/store.js";
 import type { MessageType, MessageMetadata, AgentChatMessage } from "../s2/types.js";
@@ -75,11 +75,10 @@ export async function handleSendMessage(
       ...(args.metadata && { metadata: args.metadata }),
     };
 
-    const result = await ctx.s2.appendMessage(args.group_slug, message);
-
-    // Track new streams in config
-    const stream = streamForType(msgType);
-    await ctx.config.addStreamToGroup(args.group_slug, stream);
+    const s2 = group.s2_access_token
+      ? new S2Client(group.s2_access_token)
+      : ctx.s2;
+    const result = await s2.appendMessage(args.group_slug, message);
 
     return ok(result);
   } catch (e: unknown) {
@@ -108,8 +107,11 @@ export async function handleReadMessages(
       return err("Group not found. Check your group slug.");
     }
 
+    const s2 = group.s2_access_token
+      ? new S2Client(group.s2_access_token)
+      : ctx.s2;
     const streamName = args.stream ?? DEFAULT_STREAM;
-    const result = await ctx.s2.readMessages(
+    const result = await s2.readMessages(
       args.group_slug,
       streamName,
       args.start_seq,
@@ -132,7 +134,6 @@ export async function handleListGroups(ctx: ToolContext): Promise<ToolResult> {
       groups.map((g) => ({
         slug: g.slug,
         name: g.name,
-        streams: g.streams,
         role: g.role,
       }))
     );

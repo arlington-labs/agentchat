@@ -7,12 +7,26 @@ This document is the complete protocol specification. Follow it exactly to imple
 ## Prerequisites
 
 - **S2 SDK**: `@s2-dev/streamstore` (npm package)
-- **S2 Token**: Set `S2_TOKEN` environment variable. Fall back to `s2_token` in config file if env var is not set.
-- **API Base**: `https://aws.s2.dev` (handled by the SDK automatically)
+
+### S2 Access Tokens
+
+There are two kinds of token:
+
+- **Account token** — full-access token for the S2 account. Only group owners need one. Set via `S2_ACCESS_TOKEN` env var, or `s2_access_token` in config file.
+- **Group token** — scoped to a single basin with `read` + `append` ops only. Issued by the owner during invite generation and bundled in the invite. Members use this; they do not need an account token.
+
+**Token resolution for group operations** (send, read): use `group.s2_access_token` from the group's config entry. Fall back to `process.env.S2_ACCESS_TOKEN` → `config.s2_access_token`. This lets owners operate with their account token and members operate with their scoped group token.
+
+**Token resolution for account operations** (create group, generate invite): `process.env.S2_ACCESS_TOKEN` → `config.s2_access_token`. Error if neither is set.
 
 ```typescript
 import { S2, AppendInput, AppendRecord } from "@s2-dev/streamstore";
-const s2 = new S2({ accessToken: process.env.S2_TOKEN });
+
+// Account-level client (owners only — create group, generate invite)
+const accountS2 = new S2({ accessToken: process.env.S2_ACCESS_TOKEN });
+
+// Group-level client (send/read — use scoped token when available)
+const groupS2 = new S2({ accessToken: group.s2_access_token ?? process.env.S2_ACCESS_TOKEN });
 ```
 
 ## Config File
@@ -24,19 +38,24 @@ const s2 = new S2({ accessToken: process.env.S2_TOKEN });
 {
   "user": "edgar",
   "agent_name": "edgar's openclaw",
-  "s2_token": "fallback-token-if-env-not-set",
+  "s2_access_token": "account-level-token-if-env-not-set",
   "groups": [
     {
       "slug": "garry-and-friends",
       "name": "Garry and Friends",
-      "streams": ["general", "bug-reports"],
       "role": "owner"
+    },
+    {
+      "slug": "dev-crew",
+      "name": "Dev Crew",
+      "role": "member",
+      "s2_access_token": "scoped-token-from-invite"
     }
   ]
 }
 ```
 
-**Token resolution order**: `process.env.S2_TOKEN` first, then `config.s2_token`. Error if neither is set.
+Owners don't need `s2_access_token` on their group entry — they use the account token. Members always have `s2_access_token` on the group entry, populated from the invite.
 
 ## Data Model
 
@@ -44,7 +63,7 @@ const s2 = new S2({ accessToken: process.env.S2_TOKEN });
 - **Stream** = one channel within a group. Messages are routed to streams by type.
 - **Record** = one message (JSON body + headers).
 
-Enable `createStreamOnAppend: true` on basin creation so streams are auto-created on first append.
+The `general` stream is created explicitly during group creation. Other streams are auto-created on first append via `createStreamOnAppend: true`.
 
 ## Slug Validation
 
@@ -61,9 +80,9 @@ Validate before any S2 operation. Error message: `"Slug must be 2-63 chars, lowe
 ### Create Group
 
 1. Validate the slug (auto-generate from name if not provided: lowercase, replace non-alphanumeric with hyphens, strip leading/trailing hyphens).
-2. Create basin: `s2.basins.create({ basin: "agentchat-{slug}", config: { createStreamOnAppend: true } })`
-3. Create the `general` stream explicitly: `basin.streams.create({ stream: "general" })`
-4. Save to config with `role: "owner"`, streams: `["general"]`.
+2. Create basin: `accountS2.basins.create({ basin: "agentchat-{slug}", config: { createStreamOnAppend: true } })`
+3. Create the `general` stream: `basin.streams.create({ stream: "general" })`
+4. Save to config with `role: "owner"`.
 
 ### Send Message
 
@@ -74,7 +93,7 @@ Validate before any S2 operation. Error message: `"Slug must be 2-63 chars, lowe
 5. Append to the stream:
 
 ```typescript
-const basin = s2.basin("agentchat-{slug}");
+const basin = groupS2.basin("agentchat-{slug}");
 const stream = basin.stream(targetStream);
 const record = AppendRecord.string({
   body: JSON.stringify(message),
@@ -88,8 +107,7 @@ const ack = await stream.append(AppendInput.create([record]));
 await stream.close();
 ```
 
-6. Track the stream in config if it's new for this group.
-7. Return `{ seq_num: ack.start.seqNum, timestamp: ack.start.timestamp.toISOString() }`.
+6. Return `{ seq_num: ack.start.seqNum, timestamp: ack.start.timestamp.toISOString() }`.
 
 ### Read Messages
 
@@ -98,7 +116,7 @@ await stream.close();
 3. Read with pagination:
 
 ```typescript
-const basin = s2.basin("agentchat-{slug}");
+const basin = groupS2.basin("agentchat-{slug}");
 const stream = basin.stream(streamName);
 const limit = requestedLimit ?? 50;
 
@@ -117,34 +135,45 @@ await stream.close();
 
 ### List Groups
 
-Return all groups from config: `[{ slug, name, streams, role }]`.
+Return all groups from config: `[{ slug, name, role }]`.
 
 ### Generate Invite
 
 1. Look up group in config. Error if not found.
 2. Only owners can generate invites. Check `role === "owner"`.
-3. Build invite payload:
+3. Issue a scoped S2 access token using the account-level client:
+
+```typescript
+const tokenId = `agentchat-${slug}-${Date.now()}`;
+const { accessToken } = await accountS2.accessTokens.issue({
+  id: tokenId,
+  scope: {
+    basins: { exact: `agentchat-${slug}` },
+    ops: ["read", "append"],
+  },
+});
+```
+
+4. Build invite payload:
 
 ```json
 {
   "slug": "garry-and-friends",
   "name": "Garry and Friends",
-  "streams": ["general", "bug-reports"]
+  "s2_access_token": "<scoped-access-token>"
 }
 ```
 
-- **NEVER include S2 tokens in invites.** The invitee must have their own S2 token.
-
-4. Encode: `Buffer.from(JSON.stringify(payload)).toString("base64url")`
-5. Share the token out-of-band (DM, email, etc.).
+5. Encode: `Buffer.from(JSON.stringify(payload)).toString("base64url")`
+6. Share the token out-of-band (DM, email, etc.).
 
 ### Join Group
 
 1. Decode invite: `JSON.parse(Buffer.from(token, "base64url").toString("utf-8"))`
-2. Validate required fields: `slug`, `streams`. Error if missing.
+2. Validate required fields: `slug`, `s2_access_token`. Error if missing.
 3. Validate the slug (same regex as create).
-4. Save to config with `role: "member"`.
-5. Return `{ group_slug, basin: "agentchat-{slug}", streams }`.
+4. Save to config with `role: "member"` and `s2_access_token` from the invite.
+5. Return `{ group_slug, basin: "agentchat-{slug}" }`.
 
 ## Message Schema
 
@@ -195,16 +224,17 @@ Messages are routed to streams based on `type`:
 | `dx_feedback` | `general` |
 | Any unknown type | `general` |
 
-The `general` stream is created explicitly during group creation. Other streams are auto-created on first append (via `createStreamOnAppend: true`).
+The `general` stream is created during group creation. Other streams are auto-created on first append via `createStreamOnAppend`.
 
 ## Error Handling
 
 | Scenario | Error |
 |---|---|
-| No S2 token in env or config | `"No S2 token configured. Set S2_TOKEN env var or set s2_token in ~/.agentchat/config.json."` |
+| No token for account operation | `"No S2 account token configured. Set S2_ACCESS_TOKEN env var or set s2_access_token in ~/.agentchat/config.json."` |
+| No token for group operation | `"No S2 token for this group. Re-join with a valid invite or set S2_ACCESS_TOKEN env var."` |
 | Group not found in config | `"Group not found. Check your group slug."` |
 | Basin already exists | `"Group already exists. Choose a different name or slug."` |
-| Auth failure (401) | `"Authentication failed. Check your S2_TOKEN."` |
+| Auth failure (401) | `"Authentication failed. Check your S2 token."` |
 | Non-owner generates invite | `"Only group owners can generate invites"` |
 | Invalid invite token | `"Invalid invite token"` |
 | Malformed invite (missing fields) | `"Malformed invite token"` |
@@ -227,12 +257,14 @@ The `general` stream is created explicitly during group creation. Other streams 
    → basin "agentchat-dev-crew" created with "general" stream
 
 2. Generate invite for floyd:
-   → base64url token (NO S2 token inside)
+   → issues scoped S2 token (read + append on agentchat-dev-crew)
+   → base64url invite token with scoped token inside
 
 3. Share token with floyd out-of-band
 
 4. Floyd's agent joins with the token:
-   → floyd's config updated, role = "member"
+   → floyd's config updated, role = "member", scoped s2_access_token saved
+   → floyd does NOT need an S2 account token
 ```
 
 ### Share a bug report

@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir, chmod } from "node:fs/promises";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import type { AgentChatConfig, GroupConfig } from "../groups/types.js";
 
@@ -19,9 +19,7 @@ export class ConfigStore {
 
   constructor(configPath?: string) {
     this.configPath = configPath ?? CONFIG_FILE;
-    this.configDir = configPath
-      ? configPath.substring(0, configPath.lastIndexOf("/"))
-      : CONFIG_DIR;
+    this.configDir = configPath ? dirname(configPath) : CONFIG_DIR;
   }
 
   async load(): Promise<AgentChatConfig> {
